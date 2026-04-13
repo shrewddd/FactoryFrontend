@@ -286,11 +286,16 @@ function createWorkerColumn(handleCellUpdate: UpdateFunction, users: User[], dep
     accessorKey: `workers_${department.label}`,
     header: ({ column }) => <SortableHeader column={column} field={department.label} />,
     cell: ({ row }) => {
+      console.log(row.original)
       const entry = row.original.workers?.find((w) => w.department.id === department.id);
 
       const usersData = users
-        .filter((u) => u.departments?.some((d) => d.id === department.id))
-        .map((u) => ({ label: u.fullName ?? "", value: String(u.id) }));
+      .filter((u) =>
+        u.role?.label === "Admin" ||
+          u.departments?.some((d) => d.id === department.id)
+      )
+      .map((u) => ({ label: u.fullName ?? "", value: String(u.id) }));
+
 
       return (
         <SelectCell
