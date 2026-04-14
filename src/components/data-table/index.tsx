@@ -1,7 +1,7 @@
 "use client"
 
-import { getCoreRowModel, useReactTable, getSortedRowModel, type ColumnDef, type SortingState, type ColumnFiltersState, getFilteredRowModel, type VisibilityState, getPaginationRowModel, type TableState, type PaginationState, getFacetedRowModel, getFacetedUniqueValues } from "@tanstack/react-table"
-import { useState, type ReactNode } from "react"
+import { getCoreRowModel, useReactTable, getSortedRowModel, type ColumnDef, type SortingState, type ColumnFiltersState, getFilteredRowModel, type VisibilityState, getPaginationRowModel, type TableState, type PaginationState, getFacetedRowModel, getFacetedUniqueValues, type Table, type OnChangeFn, type RowSelectionState } from "@tanstack/react-table"
+import { useState, useImperativeHandle, type ReactNode, type Ref } from "react"
 
 import { TablePagination } from "./pagination"
 import { TableToolbar } from "./toolbar"
@@ -27,16 +27,26 @@ interface DataTableProps<TData, TValue> {
   initialState?: Partial<TableState>; 
   toolbarExtras?: JSX.Element;
   isAddSection?: boolean;
+  tableRef?: Ref<Table<TData>>;
+  onRowSelectionChange?: (count: number) => void;
 }
 
-export function DataTable<TData, TValues>({ columns, searchValues, data, contentForm, filters, initialState, toolbarExtras, isAddSection = true } : DataTableProps<TData, TValues>){
+export function DataTable<TData, TValues>({ columns, searchValues, data, contentForm, filters, initialState, toolbarExtras, isAddSection = true, tableRef, onRowSelectionChange } : DataTableProps<TData, TValues>){
   const [sorting, setSorting] = useState<SortingState>([{ id: "id", desc: false }])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialState?.columnFilters || [])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialState?.columnVisibility || {})
-  const [rowSelection, setRowSelection] = useState({})
-  const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: 10 })
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: 50 })
 
   const [isAddFormOpen, setIsAddFormOpen] = useState(false)
+
+  const handleRowSelectionChange: OnChangeFn<RowSelectionState> = (updater) => {
+    setRowSelection((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      onRowSelectionChange?.(Object.keys(next).length);
+      return next;
+    });
+  };
 
   const table = useReactTable({
     data, 
@@ -49,7 +59,7 @@ export function DataTable<TData, TValues>({ columns, searchValues, data, content
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: handleRowSelectionChange,
     onPaginationChange: setPagination,
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: (table, columnId) => {
@@ -83,6 +93,8 @@ export function DataTable<TData, TValues>({ columns, searchValues, data, content
       pagination,
     },
   })
+
+  useImperativeHandle(tableRef, () => table);
 
   return (
     <div className="flex flex-col w-full">
