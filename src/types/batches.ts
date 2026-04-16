@@ -57,3 +57,16 @@ export type InsertBatch = {
 }
 
 export type InsertBatchBulk = InsertBatch & { amount: number };
+
+export type AdvanceBatchPayload = {
+  id: number;
+  defects: { defect_type_id: number; quantity: number }[];
+  sizeOverride?: number;
+};
+
+export type PackedStock = {
+  product_id: number;
+  product_name: string;
+  quantity: number;
+};
+

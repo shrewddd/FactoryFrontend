@@ -1,5 +1,5 @@
 import { API_URL } from "@/config";
-import type { Batch, InsertBatch, InsertBatchBulk } from "@/types/batches";
+import type { Batch, InsertBatch, InsertBatchBulk, PackedStock, AdvanceBatchPayload } from "@/types/batches";
 
 const BASE_URL = `${API_URL}/batches`;
 
@@ -54,12 +54,6 @@ export const deleteBatch = async (id: number): Promise<Batch> => {
   return response.json();
 };
 
-export type AdvanceBatchPayload = {
-  id: number;
-  defects: { defect_type_id: number; quantity: number }[];
-  sizeOverride?: number;
-};
-
 export const advanceBatch  = async ({ id , defects, sizeOverride }: AdvanceBatchPayload): Promise<Batch> => {
   const response = await fetch(`${BASE_URL}/${id}/advance`, {
     method: "PATCH",
@@ -68,6 +62,12 @@ export const advanceBatch  = async ({ id , defects, sizeOverride }: AdvanceBatch
     credentials: "include",
   });
   if (!response.ok) throw new Error("Failed to advance batch");
+  return response.json();
+};
+
+export const getPackedStock = async (): Promise<PackedStock[]> => {
+  const response = await fetch(`${BASE_URL}/packed-stock`, { credentials: "include" });
+  if (!response.ok) throw new Error("Failed to fetch packed stock");
   return response.json();
 };
 
@@ -83,6 +83,24 @@ export const executePlannedBatches = async (): Promise<Batch> => {
   return response.json();
 };
 
+
+export type PackBatchPayload = {
+  id: number;
+  remain: number;
+  defects: { defect_type_id: number; quantity: number }[];
+};
+
+export const packBatch = async ({ id, remain, defects }: PackBatchPayload): Promise<Batch> => {
+  const response = await fetch(`${BASE_URL}/${id}/pack`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ remain, defects }),
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Failed to pack batch");
+  return response.json();
+};
+
 export const batchService = {
   getAll: getAllBatches,
   get: getBatch,
@@ -91,6 +109,8 @@ export const batchService = {
   update: updateBatch,
   delete: deleteBatch,
   advance: advanceBatch,
+  pack: packBatch, 
+  getPackedStock: getPackedStock,
   planned: {
     initialize: initializePlannedBatches,
     execute: executePlannedBatches,

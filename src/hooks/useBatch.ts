@@ -1,6 +1,7 @@
 import type { Batch, InsertBatch, InsertBatchBulk } from "@/types/batches";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { batchService as service, type AdvanceBatchPayload } from "@/services/batches";
+import { batchService as service, type PackBatchPayload } from "@/services/batches";
+import type { AdvanceBatchPayload } from "@/types/batches";
 
 export const batchKeys = {
   all: () => ["batches"] as const,
@@ -135,6 +136,25 @@ export const useExecutePlannedBatch = () => {
   });
 };
 
+export const usePackBatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation<Batch, Error, PackBatchPayload>({
+    mutationFn: (payload) => service.pack(payload),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: batchKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: batchKeys.lists() });
+    },
+  });
+};
+
+export const useGetPackedStock = () => {
+  return useQuery({
+    queryKey: ["batches", "packed-stock"],
+    queryFn: service.getPackedStock,
+    staleTime: STALE_TIME,
+  });
+};
+
 export const useBatches = {
   getAll: useGetAllBatches,
   get: useGetBatch,
@@ -143,6 +163,8 @@ export const useBatches = {
   update: useUpdateBatch,
   delete: useDeleteBatch,
   advance: useAdvanceBatch,
+  pack: usePackBatch,
+  getPackedStock: useGetPackedStock,
 };
 
 export const usePlannedBatches = {
