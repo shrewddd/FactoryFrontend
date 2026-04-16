@@ -27,10 +27,13 @@ export const BatchPreviewPage = () => {
   const navigate = useNavigate();
 
   const { data: batch } = useBatches.get(Number(id));
-  const { mutate: advance } = useBatches.advance()
+  const { mutate: advance } = useBatches.advance();
+  const { mutate: pack } = useBatches.pack();
 
   const [defects, setDefects] = useState<Record<number, number>>({});
   const [sizeOverride, setSizeOverride] = useState<number>(0);
+  const [remain, setRemain] = useState<number>(0);
+  const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     if (batch?.actualSize) {
@@ -40,6 +43,9 @@ export const BatchPreviewPage = () => {
 
   const showQuestionnaire = batch?.status.allowsDefectReporting;
   const showSizeOverride = String(batch?.status.label) === "Activated";
+  const isPackagingStep = batch?.status.label === "Packaging Workshop (In-Progress)";
+  const isFinish = batch?.status.label?.includes("Finished");
+  const isInProgress = batch?.status.label?.includes("In-Progress");
 
   const handleChange = (id: number, value: string) => {
     setDefects((prev) => ({ ...prev, [id]: Math.max(0, parseInt(value) || 0) }));
@@ -55,22 +61,28 @@ export const BatchPreviewPage = () => {
         quantity,
       }));
 
-    advance(
-      {
-        id: Number(id),
-        defects: defectsPayload,
-        sizeOverride: showSizeOverride ? sizeOverride : batch.actualSize ? batch.actualSize : undefined,
-      },
-      { onSuccess: () => navigate("/") },
-    );
+    if (isPackagingStep) {
+      pack(
+        { id: Number(id), remain, defects: defectsPayload },
+        { onSuccess: () => { setScanned(true); setTimeout(() => navigate("/"), 1000); } },
+      );
+    } else {
+      advance(
+        {
+          id: Number(id),
+          defects: defectsPayload,
+          sizeOverride: showSizeOverride ? sizeOverride : batch.actualSize ? batch.actualSize : undefined,
+        },
+        { onSuccess: () => { setScanned(true); setTimeout(() => navigate("/"), 1000); } },
+      );
+    }
   };
 
-  console.log(showQuestionnaire, showSizeOverride)
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-4 md:p-6">
       <div className="w-full max-w-md">
         <div className="flex flex-col gap-6">
-          <Card>
+          {!scanned && (<Card>
             <CardHeader>
               <CardTitle>Інформація про партію</CardTitle>
               <CardDescription>
@@ -88,9 +100,21 @@ export const BatchPreviewPage = () => {
             <CardContent>
               {showQuestionnaire && (
                 <ScrollArea className="h-[40vh] px-4">
-                  <FieldSet className="flex gap-4">
+                  <div className="pb-8">
+                    {isPackagingStep && (
+                      <FieldSet>
+                        <FieldLegend>Залишок</FieldLegend>
+                        <Field className="flex flex-row font-normal text-xl">
+                          <FieldLabel>Кількість</FieldLabel>
+                          <Input
+                            value={remain}
+                            onChange={(e) => setRemain(Math.max(0, parseInt(e.target.value) || 0))}
+                          />
+                        </Field>
+                      </FieldSet>
+                    )}
                     {showSizeOverride && (
-                      <Field className="flex flex-row font-normal">
+                      <Field className="flex flex-row font-normal texl-xl">
                         <FieldLabel>Актуальна Кількість</FieldLabel>
                         <Input
                           value={sizeOverride}
@@ -98,6 +122,8 @@ export const BatchPreviewPage = () => {
                         />
                       </Field>
                     )}
+                  </div>
+                  <FieldSet className="flex gap-4">
                     <FieldLegend>Другий сорт</FieldLegend>
                     <FieldGroup className="gap-2">
                       {SECOND_GRADE.map((type) => (
@@ -125,11 +151,22 @@ export const BatchPreviewPage = () => {
                   </FieldSet>
                 </ScrollArea>
               )}
-              <Button className="mt-4 w-full" onClick={handleAdvance} disabled={!id}>
-                Сканувати
+              <Button
+                className="mt-4 w-full"
+                onClick={handleAdvance}
+                disabled={!id || scanned}
+              >
+                {isFinish ? "Взяти в роботу" : isInProgress ? "Завершити роботу" : "Сканувати"}
               </Button>
             </CardContent>
-          </Card>
+          </Card>)}
+          {scanned && (
+            <Card style={{ borderColor: "#22c55e" }}>
+              <CardContent className="p-2 text-center font-semibold text-lg" style={{ color: "#22c55e" }}>
+                ✓ Успішно відскановано!
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
