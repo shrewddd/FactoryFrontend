@@ -10,6 +10,7 @@ import type { Row } from "@tanstack/react-table";
 import { useGetAllWorkstations } from "@/hooks/useWorkstations";
 import { Button } from "@/components/ui/button";
 import type { Department } from "@/types/departments";
+import { useState } from "react";
 
 export const BatchPage = () => {
   const { data: batches } = useBatches.getAll();
@@ -18,7 +19,6 @@ export const BatchPage = () => {
   const { data: workstations } = useGetAllWorkstations()
   const { mutate: updateBatch } = useUpdateBatch();
   const { mutate: createBatch } = useCreateBatch();
-
 
   const status = [
     { label: "Inactive", value: "Inactive", icon: CircleX },
@@ -100,20 +100,28 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
 
   const columns = getBatchColumns(handleCellUpdate, products ?? [], users ?? [], workstations ?? [], departments ?? []);
 
+  const [showArchive, setShowArchive] = useState(false)
+
+  const normalised = batches ?? []
+  const resultBatches = !showArchive ? normalised.filter(b => b.status.label !== "Completed") : normalised.filter(b => b.status.label === "Completed")
+
   return (
     <DataTable
       columns={columns}
-      data={batches ?? []}
+      data={resultBatches ?? []}
       // contentForm={<BatchForm onSuccess={refetch} />}
       isAddSection={false}
       toolbarExtras={
-        <div className="flex justify-end w-full">
+        <div className="flex justify-between w-full">
+          <Button className="h-8" variant="outline" onClick={() => setShowArchive(!showArchive)}>{!showArchive ? "Показать архив" : "Скрыть архив"}</Button>
           <Button className="h-8" variant="outline" onClick={handleRowClick}>Add row</Button>
         </div>
       }
       filters={filters}
       searchValues={"name"}
-      initialState={{ columnVisibility: { plannedFor: false, updatedAt: false } }}
+      initialState={{ 
+        columnVisibility: { plannedFor: false, updatedAt: false } 
+      }}
     />
   );
 };
