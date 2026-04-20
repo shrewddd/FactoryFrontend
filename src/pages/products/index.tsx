@@ -2,10 +2,12 @@ import { DataTable } from "@/components/data-table"
 import { getProductColumns } from "./columns"
 import { useProducts } from "@/hooks/useProducts"
 import { CircleCheck, CircleX } from "lucide-react"
+import { useBatches } from "@/hooks/useBatch"
 
 export const ProductsPage = () => {
   const { data: products, isLoading } = useProducts.getAll() 
   const { mutate: updateProduct } = useProducts.update()
+  const { data: packedStock } = useBatches.getPackedStock();
 
   const handleCellUpdate = (field: string, value: string | boolean, row: any) => {
     updateProduct({
@@ -42,7 +44,7 @@ export const ProductsPage = () => {
 
   return (
     <DataTable 
-      columns={getProductColumns({onCellUpdate: handleCellUpdate})} 
+      columns={getProductColumns({onCellUpdate: handleCellUpdate, packedStock})} 
       data={products ? products : []} 
       isAddSection={false}
       searchValues="name" 

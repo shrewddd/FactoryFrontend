@@ -8,12 +8,14 @@ import { createColumn, createIdColumn, createSelectColumn } from "@/components/d
 import { SortableHeader } from "@/components/data-table/sortable-header";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { PackedStock } from "@/types/batches";
 
 interface ProductColumnsProps {
   onCellUpdate: (field: string, value: string | boolean, row: any) => void;
+  packedStock: PackedStock[] | undefined;
 }
 
-export const getProductColumns = ({ onCellUpdate }: ProductColumnsProps) => {
+export const getProductColumns = ({ onCellUpdate, packedStock }: ProductColumnsProps) => {
   const columns: ColumnDef<Product>[] = [
     createSelectColumn<Product>(),
     createIdColumn<Product>(),
@@ -25,6 +27,17 @@ export const getProductColumns = ({ onCellUpdate }: ProductColumnsProps) => {
       },
       cell: ({ row }) => {
         return <div className="text-left max-w-fit!">{row.original.name}</div>;
+      },
+    },
+    {
+      id: "Packed",
+      header: ({ column }) => {
+        return <SortableHeader column={column} field={"Packed"} />;
+      },
+      cell: ({ row }) => {
+        const normalized = packedStock ?? []
+        const stock = normalized.find((s) => s.product_id === row.original.id);
+        return <div className="text-center">{stock?.quantity ?? 0}</div>;
       },
     },
     {
