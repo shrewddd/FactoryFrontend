@@ -32,7 +32,10 @@ export const QRCodePreviewPage = () => {
     return <div>Something went wrong</div>;
   }
 
-  const filteredBatches = batches;
+
+  const normalizedBatches = batches ?? []
+  const filteredBatches = normalizedBatches.filter((batch) => batch.status.label === "Inactive");
+
   const savedWorkstationId = localStorage.getItem("workstationId");
 
   const handleClick = async (e: any) => {
