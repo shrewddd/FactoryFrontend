@@ -49,7 +49,9 @@ export const updateQRCode = async ({ id, data }: { id: number; data: InsertQRCod
 };
 
 export const deleteQRCode = async (id: number): Promise<QRCode> => {
-  const response = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", credentials: "include" });
+  const response = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", 
+    headers: { "Content-Type": "application/json" },
+    credentials: "include" });
   if (!response.ok) throw new Error("Failed to delete qrcode");
   return response.json();
 };

@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { createColumn, createIdColumn, createSelectColumn } from "@/components/data-table/common-columns";
 import QRCodeLib from "qrcode";
 import { API_URL } from "@/config";
+import { useQR } from "@/hooks/useQR";
 
 export const printMultipleQRCodes = async (qrCodes: QRCode[]) => {
   const items = await Promise.all(
@@ -198,6 +199,14 @@ export const getColumns = (openActivateDialog: (qr: QRCode) => void, openSeeDial
   {
     id: "actions",
     cell: ({ row }) => {
+
+
+      const deleteMutation = useQR.delete();
+
+      const handleDelete = (id: number) => {
+        deleteMutation.mutate(id);
+      };
+
       return (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -222,7 +231,7 @@ export const getColumns = (openActivateDialog: (qr: QRCode) => void, openSeeDial
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => handleDelete(row.original.id)}>Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
