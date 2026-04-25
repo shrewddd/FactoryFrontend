@@ -89,6 +89,22 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
     });
   };
 
+  const handleAdd36 = () => {
+    Array.from({ length: 36 }, (_, i) =>
+      createBatch({
+        name: null,
+        size: 200,
+        actualSize: 200,
+        productId: undefined,
+        workstationId: i + 1,
+        statusId: null,
+        plannedFor: new Date(),
+        workers: [],
+        isActive: true,
+      })
+    );
+  };
+
   const departments: Department[] = [
     { id: 1, label: "Knitting", isActive: true },
     { id: 2, label: "Sewing", isActive: true },
@@ -114,7 +130,10 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
       toolbarExtras={
         <div className="flex justify-between w-full">
           <Button className="h-8" variant="outline" onClick={() => setShowArchive(!showArchive)}>{!showArchive ? "Показать архив" : "Скрыть архив"}</Button>
-          <Button className="h-8" variant="outline" onClick={handleRowClick}>Add row</Button>
+          <div className="flex flex-row gap-2">
+            <Button className="h-8" variant="outline" onClick={handleRowClick}>Add row</Button>
+            <Button className="h-8" variant="outline" onClick={handleAdd36}>Add 36</Button>
+          </div>
         </div>
       }
       filters={filters}
