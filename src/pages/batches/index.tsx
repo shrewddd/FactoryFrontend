@@ -78,8 +78,8 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
   const handleRowClick = () => {
     createBatch({
       name: null,
-      size: 150,
-      actualSize: 150,
+      size: 200,
+      actualSize: 200,
       productId: undefined,
       workstationId:undefined,
       statusId: null,
