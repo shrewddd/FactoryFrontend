@@ -52,7 +52,7 @@ const loginRoute = {
 };
 
 const employeesRoute = {
-  name: "Employees",
+  name: "Співробітники",
   path: "/employees",
   element: <EmployeesPage />,
   roles: ["Master"],
@@ -61,7 +61,7 @@ const employeesRoute = {
 };
 
 const productsRoute = {
-  name: "Products",
+  name: "Продукція ",
   path: "/products",
   element: <ProductsPage />,
   roles: ["Master"],
@@ -79,7 +79,7 @@ const inProgressBatchesRoute = {
 };
 
 const doneBatchesRoute = {
-  name: "Batches",
+  name: "Партії",
   path: "/batch",
   element: <BatchPage />,
   roles: ["Master"],
@@ -96,7 +96,7 @@ const singularBatchRoute = {
 };
 
 const storageRoute = {
-  name: "Storage",
+  name: "Склад",
   path: "/storage",
   element: <StoragePage />,
   roles: ["Master"],
@@ -105,7 +105,7 @@ const storageRoute = {
 };
 
 const qrcodeRoute = {
-  name: "Generate QR",
+  name: "Генерація QR",
   path: "/qrcodes",
   element: <QrCodeGenerationPage />,
   roles: ["Master"],
@@ -131,7 +131,7 @@ const workerPlanRoute = {
 };
 
 const workstationsRoute = {
-  name: "Workstations",
+  name: "Робочі станції ",
   path: "/workstations",
   element: <WorkstationsPage />,
   roles: ["Master"],
