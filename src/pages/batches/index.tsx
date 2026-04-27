@@ -18,7 +18,6 @@ export const BatchPage = () => {
   const { data: users } = useGetAllUsers()
   const { data: workstations } = useGetAllWorkstations()
   const { mutate: updateBatch } = useUpdateBatch();
-  const { mutate: createBatch } = useCreateBatch();
 
   const status = [
     { label: "Inactive", value: "Inactive", icon: CircleX },
@@ -35,6 +34,7 @@ export const BatchPage = () => {
     { label: "Labeling Workshop (Finished)", value: "Labeling Workshop (Finished)", icon: Tag },
     { label: "Packaging Workshop (In-Progress)", value: "Packaging Workshop (In-Progress)", icon: Archive },
     { label: "Completed", value: "Completed", icon: CircleCheck },
+  const { mutateAsync: createBatch } = useCreateBatch();
   ];
 
 
@@ -89,9 +89,12 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
     });
   };
 
-  const handleAdd36 = () => {
-    Array.from({ length: 36 }, (_, i) =>
-      createBatch({
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAdd36 = async () => {
+    setIsAdding(true);
+    for (let i = 0; i < 36; i++) {
+      await createBatch({
         name: null,
         size: 200,
         actualSize: 200,
@@ -101,8 +104,9 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
         plannedFor: new Date(),
         workers: [],
         isActive: true,
-      })
-    );
+      });
+    }
+    setIsAdding(false);
   };
 
   const departments: Department[] = [
@@ -114,7 +118,7 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
     { id: 6, label: "Packaging", isActive: true },
   ]
 
-  const columns = getBatchColumns(handleCellUpdate, products ?? [], users ?? [], workstations ?? [], departments ?? []);
+  const columns = getBatchColumns(handleCellUpdate, products ?? [], users ?? [], workstations ?? [], departments ?? [], status);
 
   const [showArchive, setShowArchive] = useState(false)
 
@@ -132,7 +136,7 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
           <Button className="h-8" variant="outline" onClick={() => setShowArchive(!showArchive)}>{!showArchive ? "Показать архив" : "Скрыть архив"}</Button>
           <div className="flex flex-row gap-2">
             <Button className="h-8" variant="outline" onClick={handleRowClick}>Add row</Button>
-            <Button className="h-8" variant="outline" onClick={handleAdd36}>Add 36</Button>
+            <Button className="h-8" variant="outline" onClick={handleAdd36} disabled={isAdding}>{isAdding ? "Adding..." : "Add 36"}</Button>
           </div>
         </div>
       }
