@@ -34,9 +34,10 @@ export const QRCodePreviewPage = () => {
 
 
   const normalizedBatches = batches ?? []
-  const filteredBatches = normalizedBatches.filter((batch) => batch.status.label === "Inactive");
 
-  const savedWorkstationId = localStorage.getItem("workstationId");
+  const savedWorkstationId = Number(localStorage.getItem("workstationId")) ;
+
+  const filteredBatches = normalizedBatches.filter((batch) => batch.status.label === "Inactive" && batch.workstation.id === savedWorkstationId);
 
   const handleClick = async (e: any) => {
     e.preventDefault();
