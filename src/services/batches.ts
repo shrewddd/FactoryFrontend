@@ -54,14 +54,21 @@ export const deleteBatch = async (id: number): Promise<Batch> => {
   return response.json();
 };
 
-export const advanceBatch  = async ({ id , defects, sizeOverride }: AdvanceBatchPayload): Promise<Batch> => {
+export const advanceBatch = async ({ id, defects, sizeOverride }: AdvanceBatchPayload): Promise<Batch> => {
   const response = await fetch(`${BASE_URL}/${id}/advance`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ defects, sizeOverride }),
     credentials: "include",
   });
-  if (!response.ok) throw new Error("Failed to advance batch");
+
+  if (!response.ok) {
+    const error = await response.json();
+
+    throw new Error(error.error);
+  }
+
+  // if (!response.ok) throw new Error("Failed to advance batch");
   return response.json();
 };
 
@@ -82,7 +89,6 @@ export const executePlannedBatches = async (): Promise<Batch> => {
   if (!response.ok) throw new Error("Failed to execute planned batches");
   return response.json();
 };
-
 
 export type PackBatchPayload = {
   id: number;
@@ -109,7 +115,7 @@ export const batchService = {
   update: updateBatch,
   delete: deleteBatch,
   advance: advanceBatch,
-  pack: packBatch, 
+  pack: packBatch,
   getPackedStock: getPackedStock,
   planned: {
     initialize: initializePlannedBatches,
