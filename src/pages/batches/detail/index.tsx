@@ -6,6 +6,7 @@ import { useBatches } from "@/hooks/useBatch";
 import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { translateStatus } from "@/utils/translation";
 
 const SECOND_GRADE = [
   { id: 1, label: "Не відповідність лінійним розмірам" },
@@ -22,12 +23,44 @@ const SPOILAGE = [
   { id: 9, label: "Не довязаний виріб" },
 ];
 
+export function translateBackendError(message?: string): string {
+  if (!message) {
+    return "Сталася помилка. Спробуйте ще раз.";
+  }
+
+  if (message.includes("not found")) {
+    return "Партію не знайдено.";
+  }
+
+  if (message.includes("terminal status")) {
+    return "Партія вже завершена.";
+  }
+
+  if (message.includes("not permitted")) {
+    return "У вас немає прав для виконання цієї дії.";
+  }
+
+  if (message.includes("concurrent packaging batches")) {
+    return "Досягнуто ліміту партій на пакуванні.";
+  }
+
+  if (message.includes("already working on another batch")) {
+    return "У вас уже є активні партії в роботі.";
+  }
+
+  if (message.includes("exceed actual size")) {
+    return "Кількість браку перевищує кількість виробів.";
+  }
+
+  return "Сталася помилка. Спробуйте ще раз.";
+}
+
 export const BatchPreviewPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { data: batch } = useBatches.get(Number(id));
-  const { mutate: advance } = useBatches.advance();
+  const { mutate: advance, error: advanceError } = useBatches.advance();
   const { mutate: pack } = useBatches.pack();
 
   const [defects, setDefects] = useState<Record<number, number>>({});
@@ -91,7 +124,8 @@ export const BatchPreviewPage = () => {
                     <p>{batch.product.name}</p>
                     <p>Розмір: {batch.size}</p>
                     <p>Актуальний Розмір: {batch.actualSize}</p>
-                    <p>Статус: {batch.status.label}</p>
+                    {/* <p>Статус: {batch.status.label}</p> */}
+                    <p>Статус: {translateStatus(batch.status.label)}</p>
                     <p>Назва партії: {batch.name}</p>
                   </div>
                 )}
@@ -150,6 +184,11 @@ export const BatchPreviewPage = () => {
                     </FieldGroup>
                   </FieldSet>
                 </ScrollArea>
+              )}
+              {advanceError && (
+                <div className="mt-2 rounded-md border border-red-500 p-3 text-red-500">
+                  {translateBackendError(advanceError.message)}
+                </div>
               )}
               <Button
                 className="mt-4 w-full"
