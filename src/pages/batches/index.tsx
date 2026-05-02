@@ -10,7 +10,14 @@ import type { Row } from "@tanstack/react-table";
 import { useGetAllWorkstations } from "@/hooks/useWorkstations";
 import { Button } from "@/components/ui/button";
 import type { Department } from "@/types/departments";
-import { useState } from "react";
+import { Profiler, useState, type ProfilerOnRenderCallback } from "react";
+
+export type BatchStatus = {
+  id: number;
+  label: string;
+  value: string;
+  icon: any;
+} 
 
 export const BatchPage = () => {
   const { data: batches } = useBatches.getAll();
@@ -18,25 +25,42 @@ export const BatchPage = () => {
   const { data: users } = useGetAllUsers()
   const { data: workstations } = useGetAllWorkstations()
   const { mutate: updateBatch } = useUpdateBatch();
-
-  const status = [
-    { label: "Inactive", value: "Inactive", icon: CircleX },
-    { label: "Activated", value: "Activated", icon: Scissors },
-    { label: "Knitting Workshop (Waiting for confirmation)", value: "Knitting Workshop (Waiting for confirmation)", icon: Scissors },
-    { label: "Knitting Workshop (Confirmed)", value: "Knitting Workshop (Confirmed)", icon: Scissors },
-    { label: "Sewing Workshop (In-Progress)", value: "Sewing Workshop (In-Progress)", icon: Spool },
-    { label: "Sewing Workshop (Finished)", value: "Sewing Workshop (Finished)", icon: Spool },
-    { label: "Turning Workshop (In-Progress)", value: "Turning Workshop (In-Progress)", icon: Cone },
-    { label: "Turning Workshop (Finished)", value: "Turning Workshop (Finished)", icon: Cone },
-    { label: "Molding Workshop (In-Progress)", value: "Molding Workshop (In-Progress)", icon: Layers },
-    { label: "Molding Workshop (Finished)", value: "Molding Workshop (Finished)", icon: Layers },
-    { label: "Labeling Workshop (In-Progress)", value: "Labeling Workshop (In-Progress)", icon: Tag },
-    { label: "Labeling Workshop (Finished)", value: "Labeling Workshop (Finished)", icon: Tag },
-    { label: "Packaging Workshop (In-Progress)", value: "Packaging Workshop (In-Progress)", icon: Archive },
-    { label: "Completed", value: "Completed", icon: CircleCheck },
   const { mutateAsync: createBatch } = useCreateBatch();
+
+  const status: BatchStatus[] = [
+    { id: 1, label: "Inactive", value: "Inactive", icon: CircleX },
+    { id: 2, label: "Activated", value: "Activated", icon: Scissors },
+    { id: 3, label: "Knitting Workshop (Waiting for confirmation)", value: "Knitting Workshop (Waiting for confirmation)", icon: Scissors },
+    { id: 4, label: "Knitting Workshop (Confirmed)", value: "Knitting Workshop (Confirmed)", icon: Scissors },
+    { id: 5, label: "Sewing Workshop (In-Progress)", value: "Sewing Workshop (In-Progress)", icon: Spool },
+    { id: 6, label: "Sewing Workshop (Finished)", value: "Sewing Workshop (Finished)", icon: Spool },
+    { id: 7, label: "Turning Workshop (In-Progress)", value: "Turning Workshop (In-Progress)", icon: Cone },
+    { id: 8, label: "Turning Workshop (Finished)", value: "Turning Workshop (Finished)", icon: Cone },
+    { id: 9, label: "Molding Workshop (In-Progress)", value: "Molding Workshop (In-Progress)", icon: Layers },
+    { id: 10, label: "Molding Workshop (Finished)", value: "Molding Workshop (Finished)", icon: Layers },
+    { id: 11, label: "Labeling Workshop (In-Progress)", value: "Labeling Workshop (In-Progress)", icon: Tag },
+    { id: 12, label: "Labeling Workshop (Finished)", value: "Labeling Workshop (Finished)", icon: Tag },
+    { id: 13, label: "Packaging Workshop (In-Progress)", value: "Packaging Workshop (In-Progress)", icon: Archive },
+    { id: 14, label: "Completed", value: "Completed", icon: CircleCheck },
   ];
 
+const onRender: ProfilerOnRenderCallback = (
+  id,
+  phase,
+  actualDuration,
+  baseDuration,
+  startTime,
+  commitTime
+) => {
+  console.log({
+    id,
+    phase,
+    actualDuration,
+    baseDuration,
+    startTime,
+    commitTime,
+  });
+};
 
   const filters = [{ column: "status", title: "Status", options: status }];
 
@@ -126,25 +150,27 @@ const toInsertBatch = (batch: Batch): InsertBatch => ({
   const resultBatches = !showArchive ? normalised.filter(b => b.status.label !== "Completed") : normalised.filter(b => b.status.label === "Completed")
 
   return (
-    <DataTable
-      columns={columns}
-      data={resultBatches ?? []}
-      // contentForm={<BatchForm onSuccess={refetch} />}
-      isAddSection={false}
-      toolbarExtras={
-        <div className="flex justify-between w-full">
-          <Button className="h-8" variant="outline" onClick={() => setShowArchive(!showArchive)}>{!showArchive ? "Показать архив" : "Скрыть архив"}</Button>
-          <div className="flex flex-row gap-2">
-            <Button className="h-8" variant="outline" onClick={handleRowClick}>Add row</Button>
-            <Button className="h-8" variant="outline" onClick={handleAdd36} disabled={isAdding}>{isAdding ? "Adding..." : "Add 36"}</Button>
+    <Profiler id="data-table" onRender={onRender}>
+      <DataTable
+        columns={columns}
+        data={resultBatches ?? []}
+        // contentForm={<BatchForm onSuccess={refetch} />}
+        isAddSection={false}
+        toolbarExtras={
+          <div className="flex justify-between w-full">
+            <Button className="h-8" variant="outline" onClick={() => setShowArchive(!showArchive)}>{!showArchive ? "Показать архив" : "Скрыть архив"}</Button>
+            <div className="flex flex-row gap-2">
+              <Button className="h-8" variant="outline" onClick={handleRowClick}>Add row</Button>
+              <Button className="h-8" variant="outline" onClick={handleAdd36} disabled={isAdding}>{isAdding ? "Adding..." : "Add 36"}</Button>
+            </div>
           </div>
-        </div>
-      }
-      filters={filters}
-      searchValues={"name"}
-      initialState={{ 
-        columnVisibility: { plannedFor: false, updatedAt: false } 
-      }}
-    />
+        }
+        filters={filters}
+        searchValues={"name"}
+        initialState={{ 
+          columnVisibility: { plannedFor: false, updatedAt: false } 
+        }}
+      />
+    </Profiler>
   );
 };

@@ -23,6 +23,7 @@ import type { User } from "@/types/users";
 import type { Workstation } from "@/types/workstation";
 import { useDeleteBatch } from "@/hooks/useBatch";
 import type { Department } from "@/types/departments";
+import type { BatchStatus } from ".";
 
 export const columns: ColumnDef<Batch>[] = [
   createSelectColumn<Batch>(),
@@ -286,7 +287,7 @@ function createWorkerColumn(handleCellUpdate: UpdateFunction, users: User[], dep
     accessorKey: `workers_${department.label}`,
     header: ({ column }) => <SortableHeader column={column} field={department.label} />,
     cell: ({ row }) => {
-      console.log(row.original)
+      // console.log(row.original)
       const entry = row.original.workers?.find((w) => w.department.id === department.id);
 
       const usersData = users
@@ -310,26 +311,74 @@ function createWorkerColumn(handleCellUpdate: UpdateFunction, users: User[], dep
   };
 }
 
+function createActualSizeColumn(handleCellUpdate: UpdateFunction): ColumnDef<Batch> {
+  return {
+    accessorKey: "actualSize",
+    header: ({ column }) => <SortableHeader column={column} field={"Actual size"} />,
+    cell: ({ row }) => (
+      <InputCell
+        defaultValue={String(row.original.actualSize)}
+        onBlur={(e) => {
+          e.preventDefault();
+          handleCellUpdate("actualSize", Number(e.target.value), row);
+        }}
+      />
+    ),
+  };
+}
+
+function createStatusColumn(
+  handleCellUpdate: UpdateFunction,
+  statuses: BatchStatus[],
+): ColumnDef<Batch> {
+  return {
+    id: "status",
+    accessorFn: (row) => row.status?.label ?? "",
+    header: ({ column }) => <SortableHeader column={column} field="Status" />,
+    cell: ({ row }) => {
+      const statusData = statuses.map((s) => ({
+        label: s.label,
+        value: String(s.id),
+      }));
+
+      return (
+        <SelectCell
+          row={row}
+          defaultValue={String(row.original.status?.id ?? "")}
+          data={statusData}
+          placeholder="Select status"
+          onChange={(value) => {
+            handleCellUpdate("statusId", Number(value), row);
+          }}
+        />
+      );
+    },
+  };
+}
+
 export const getBatchColumns = (
   onChange: UpdateFunction,
   products: Product[],
   users: User[],
   workstations: Workstation[],
   departments: Department[],
+  statuses: BatchStatus[],
 ): ColumnDef<Batch>[] => {
   const { mutate: deleteBatch } = useDeleteBatch();
 
   const columns: ColumnDef<Batch>[] = [
     createSelectColumn<Batch>(),
     createIdColumn<Batch>(),
-    {
-      id: "status",
-      accessorFn: (row) => row.status?.label ?? "",
-      header: ({ column }) => <SortableHeader column={column} field="Status" />,
-      cell: ({ row }) => <div className="text-center">{row.original.status.label}</div>,
-    },
+    // {
+    //   id: "status",
+    //   accessorFn: (row) => row.status?.label ?? "",
+    //   header: ({ column }) => <SortableHeader column={column} field="Status" />,
+    //   cell: ({ row }) => <div className="text-center">{row.original.status.label}</div>,
+    // },
+    createStatusColumn(onChange, statuses),
     createSizeColumn(onChange, true),
-    createColumn<Batch>("actualSize", "Actual size"),
+    createActualSizeColumn(onChange),
+    // createColumn<Batch>("actualSize", "Actual size"),
     createNameColumn(onChange, true),
     createWorkstationColumn(onChange, true, workstations),
     createProductColumn(onChange, true, products),
