@@ -1,5 +1,5 @@
 import { useGetAllBatchStatuses } from "@/api/generated/batch-status/batch-status";
-import { CircleX, Scissors, Spool, Cone, Layers, Tag, Archive, CircleCheck, BookCheck } from "lucide-react";
+import { CircleX, Scissors, Spool, Cone, Layers, Tag, Archive, CircleCheck, BookCheck, type LucideIcon } from "lucide-react";
 
 const ICONS: Record<number, typeof CircleX> = {
   1: CircleX,
@@ -18,7 +18,9 @@ const ICONS: Record<number, typeof CircleX> = {
   14: CircleCheck,
 };
 
-// const DEFAULT__ICON = Layers;
+export function getBatchStatusIcon(statusId: number): LucideIcon {
+  return ICONS[statusId] ?? Layers;
+}
 
 export function useBatchStatusFilters() {
   const { data, isLoading } = useGetAllBatchStatuses();
@@ -26,7 +28,7 @@ export function useBatchStatusFilters() {
   const options = (data ?? []).map((s) => ({
     label: s.label,
     value: String(s.id),
-    icon: ICONS[s.id],
+    icon: getBatchStatusIcon(s.id),
   }));
 
   return { data, options, isLoading };

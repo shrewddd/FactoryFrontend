@@ -1,9 +1,11 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { createSelectColumn } from "@/components/data-table/common-columns";
+import type { Column, ColumnDef } from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { ProductQuantitiesByMilestone } from "@/api/generated/models";
+import { Button } from "@/components/ui/button";
 import { SortableHeader } from "@/components/data-table/sortable-header";
+import { getBatchStatusIcon } from "@/hooks/useBatchStatusOptions";
 
 type Milestone = ProductQuantitiesByMilestone["milestones"][number];
 
@@ -11,11 +13,32 @@ function formatQuantity(value: number): string {
   return value.toLocaleString("uk-UA");
 }
 
+function renderMilestoneSortableHeader(
+  column: Column<ProductQuantitiesByMilestone>,
+  milestone: Pick<Milestone, "id" | "label">,
+) {
+  const StatusIcon = getBatchStatusIcon(milestone.id);
+  const sorting = column.getIsSorted();
+
+  return (
+    <Button
+      className="w-full"
+      variant="ghost"
+      title={milestone.label}
+      aria-label={milestone.label}
+      onClick={() => column.toggleSorting(sorting === "asc")}
+    >
+      <StatusIcon />
+      {sorting === false ? <ChevronsUpDown /> : sorting === "asc" ? <ArrowUp /> : <ArrowDown />}
+    </Button>
+  );
+}
+
 function createMilestoneColumn(milestone: Pick<Milestone, "id" | "label">): ColumnDef<ProductQuantitiesByMilestone> {
   return {
     id: `milestone-${milestone.id}`,
     accessorFn: (row) => row.milestones.find((m) => m.id === milestone.id)?.quantity ?? 0,
-    header: ({ column }) => <SortableHeader column={column} field={milestone.label} />,
+    header: ({ column }) => renderMilestoneSortableHeader(column, milestone),
     cell: ({ getValue }) => (
       <div className="text-center tabular-nums">{formatQuantity(getValue<number>())}</div>
     ),
