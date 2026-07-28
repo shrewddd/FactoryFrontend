@@ -14,6 +14,8 @@ interface ProductAddFormProps {
 export const ProductAddForm = ({ onSubmit, isPending }: ProductAddFormProps) => {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [barCode, setBarCode] = useState("");
+  const [boxSize, setBoxSize] = useState("");
   const [isActive, setIsActive] = useState<boolean>(true);
 
   const [picture, setPicture] = useState<File | null>(null);
@@ -53,11 +55,29 @@ export const ProductAddForm = ({ onSubmit, isPending }: ProductAddFormProps) => 
           <Textarea id="product-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Введіть код продукту" />
           <FieldDescription>Має бути унікальним</FieldDescription>
         </Field>
+        <Field>
+          <FieldLabel htmlFor="product-barcode">Штрихкод</FieldLabel>
+          <Input id="product-barcode" type="text" value={barCode} onChange={(e) => setBarCode(e.target.value)} placeholder="Введіть штрихкод" />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="product-box-size">Розмір коробки</FieldLabel>
+          <Input id="product-box-size" type="number" min={1} value={boxSize} onChange={(e) => setBoxSize(e.target.value)} placeholder="Введіть розмір коробки" />
+        </Field>
         <Field className="flex flex-row justify-center">
           <FieldLabel htmlFor="product-is-active">Актуальний</FieldLabel>
           <SwitchCell pressed={isActive} onPressed={setIsActive} />
         </Field>
-        <Button disabled={!name.trim() || isPending} onClick={() => onSubmit({ code: code, name, isActive, measureUnit: { id: 1 } })}>
+        <Button
+          disabled={!name.trim() || isPending}
+          onClick={() => onSubmit({
+            code: code,
+            name,
+            barCode: barCode.trim(),
+            boxSize: boxSize === "" ? undefined : Number(boxSize),
+            isActive,
+            measureUnit: { id: 1 },
+          })}
+        >
           {isPending ? "Триває додавання..." : "Додати"}
         </Button>
       </FieldGroup>

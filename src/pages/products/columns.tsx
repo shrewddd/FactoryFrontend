@@ -37,6 +37,26 @@ export const getProductColumns = ({ handlePatch, handleDelete, onEditDialogOpenC
     },
     createColumn<Product>("code", "Код"),
     {
+      accessorKey: "barCode",
+      header: ({ column }) => <SortableHeader column={column} field={"Штрихкод"} />,
+      cell: ({ row }) => {
+        return (
+          <div className="flex justify-center">
+            <InputCell
+              type="text"
+              defaultValue={row.original.barCode ?? ""}
+              onBlur={(e) => {
+                e.preventDefault();
+                const newValue = e.target.value.trim();
+                const originalValue = (row.original.barCode ?? "").trim();
+                if (newValue !== originalValue) handlePatch(row.original.id, { barCode: newValue });
+              }}
+            />
+          </div>
+        )
+      },
+    },
+    {
       accessorKey: "name",
       accessorFn: (row) => {
         return row.name
