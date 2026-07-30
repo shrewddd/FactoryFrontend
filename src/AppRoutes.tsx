@@ -3,6 +3,7 @@ import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { routes } from "@/routes/index";
 import { useAuth } from "@/AuthProvider";
 import { Layout } from "@/components/sidebar/layout";
+import { NotFoundPage } from "@/pages/not-found";
 import { useMemo } from "react";
 
 export function AppRoutes() {
@@ -30,6 +31,7 @@ export function AppRoutes() {
           <Route key={route.path} path={route.path} element={route.element}/>
         ))}
       </Route>
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
