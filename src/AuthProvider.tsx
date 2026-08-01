@@ -1,3 +1,4 @@
+import type { User } from "./api/generated/models";
 import { API_URL } from "./config";
 import {
   createContext,
@@ -7,7 +8,6 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import type { User } from "./types/users";
 
 interface AuthContextType {
   user: User | null;

@@ -1,6 +1,7 @@
 import { Mars, Venus, CircleSmall, type LucideIcon } from "lucide-react";
-import type { UserGender } from "@/types/users";
 import type { SelectOption } from "./types";
+import type { UserGender } from "@/api/generated/models";
+
 
 const GENDER_ICONS = {
   Male: Mars,

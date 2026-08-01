@@ -8,12 +8,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/AuthProvider";
 import { useState } from "react";
-import { useUsers } from "@/hooks/useUsers";
+import { useGetAllUsers } from "@/api/generated/user/user";
+// import { useUsers } from "@/hooks/useUsers";
 
 export const AuthenticationPage = () => {
   const { login } = useAuth();
 
-  const { data: users } = useUsers.getAll();
+  // const { data: users } = useUsers.getAll();
+  const { data: users } = useGetAllUsers()
 
   const [identity, setIdentity] = useState<string>("");
   const [password, setPassword] = useState<string>("");
