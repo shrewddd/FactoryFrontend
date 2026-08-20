@@ -1,11 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAdvanceBatch, useGetBatch } from "@/api/generated/batch/batch";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  getGetActiveBatchesByWorkerQueryKey,
+  getGetAllBatchesQueryKey,
+  getGetAllBatchesWithAllQueryKey,
+  getGetBatchQueryKey,
+  useAdvanceBatch,
+  useGetActiveBatchesByWorker,
+  useGetBatch,
+  useMergeBatch,
+} from "@/api/generated/batch/batch";
 import { useAuth } from "@/AuthProvider";
 import { toast } from "sonner";
 
@@ -28,13 +40,21 @@ export const BatchPreviewPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: batch } = useGetBatch(id || "0")
   const { mutateAsync: advanceBatch } = useAdvanceBatch()
+  const { mutateAsync: mergeBatch } = useMergeBatch();
+  const { data: activeBatches = [] } = useGetActiveBatchesByWorker(user?.id ?? 0, {
+    query: { enabled: !!user?.id },
+  });
 
   const [defects, setDefects] = useState<Record<number, number>>({});
   const [sizeOverride, setSizeOverride] = useState<number>(0);
   const [remain, setRemain] = useState<number>(0);
+  const [selectedMergeBatchId, setSelectedMergeBatchId] = useState("");
+  const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
 
   useEffect(() => {
     if (batch?.size) {
@@ -44,8 +64,48 @@ export const BatchPreviewPage = () => {
 
   if (!batch) return (<div>Помилка</div>)
 
+  const mergeBatches = activeBatches.filter((candidate) =>
+    candidate.id !== batch.id &&
+    candidate.status.isPackaging &&
+    batch.product.id != null &&
+    candidate.product.id === batch.product.id
+  );
+  const selectedMergeBatch = mergeBatches.find((candidate) => String(candidate.id) === selectedMergeBatchId);
+
   const handleChange = (id: number, value: string) => {
     setDefects((prev) => ({ ...prev, [id]: Math.max(0, parseInt(value) || 0) }));
+  };
+
+  const handleMerge = async () => {
+    if (!id || !user || !selectedMergeBatch || isMerging) return;
+
+    setIsMerging(true);
+    try {
+      await mergeBatch({
+        id: Number(id),
+        data: {
+          batchBId: selectedMergeBatch.id,
+          actorId: user.id,
+        },
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getGetBatchQueryKey(id) }),
+        queryClient.invalidateQueries({ queryKey: getGetBatchQueryKey(String(selectedMergeBatch.id)) }),
+        queryClient.invalidateQueries({ queryKey: getGetActiveBatchesByWorkerQueryKey(user.id) }),
+        queryClient.invalidateQueries({ queryKey: getGetAllBatchesQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getGetAllBatchesWithAllQueryKey() }),
+      ]);
+
+      setIsMergeOpen(false);
+      setSelectedMergeBatchId("");
+      toast.success("Партії об’єднано", { position: "top-right" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Не вдалося об’єднати партії";
+      toast.error(message, { position: "top-right" });
+    } finally {
+      setIsMerging(false);
+    }
   };
 
   const handleAdvance = async () => {
@@ -149,7 +209,50 @@ export const BatchPreviewPage = () => {
                   </FieldSet>
                 </ScrollArea>
               )}
-              <Button className="mt-4 w-full" onClick={handleAdvance} disabled={!id}>
+              {batch.status.isPackaging && (
+                <Dialog
+                  open={isMergeOpen}
+                  onOpenChange={(open) => {
+                    if (isMerging) return;
+                    setIsMergeOpen(open);
+                    setSelectedMergeBatchId("");
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button className="mt-4 w-full" variant="outline" disabled={!id}>
+                      Об'єднати з іншою партією
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent showCloseButton={!isMerging}>
+                    <DialogHeader>
+                      <DialogTitle>Об’єднати партії</DialogTitle>
+                      <DialogDescription>Оберіть партію для об’єднання.</DialogDescription>
+                    </DialogHeader>
+                    <RadioGroup
+                      aria-label="Партії для об’єднання"
+                      value={selectedMergeBatchId}
+                      onValueChange={setSelectedMergeBatchId}
+                      disabled={isMerging}
+                    >
+                      {mergeBatches.map((candidate) => (
+                        <label
+                          key={candidate.id}
+                          htmlFor={`merge-batch-${candidate.id}`}
+                          className="flex cursor-pointer items-center gap-3 rounded-md border p-4 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                        >
+                          <RadioGroupItem id={`merge-batch-${candidate.id}`} value={String(candidate.id)} />
+                          <span className="flex-1 font-medium">{candidate.name}</span>
+                          <span className="text-sm text-neutral-500">Кількість: {candidate.size}</span>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                    <Button onClick={handleMerge} disabled={!user || !selectedMergeBatch || isMerging}>
+                      {isMerging ? "Об’єднання..." : "Об’єднати"}
+                    </Button>
+                  </DialogContent>
+                </Dialog>
+              )}
+              <Button className="mt-4 w-full" onClick={handleAdvance} disabled={!id || isMerging}>
                 {batch.status.isFinished ? "Взяти в роботу" : batch.status.isInProgress ? "Завершити роботу" : "Сканувати"}
               </Button>
             </CardContent>
